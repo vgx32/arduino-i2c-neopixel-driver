@@ -33,6 +33,19 @@ byte pixVals[] ={ 20, 0, 0,
               
 int pixValsCt = NUMPIXELS * 3;
 
+byte _curMode = 'c';
+
+bool isMode(byte m) {
+  return 
+    m == 'b' || // alternate between all lit up at once and cycled
+    m == 'a' || // light all pixels up at once
+    m == 'c'; // (cycle) light each pixel individually
+}
+
+byte getCurMode(){
+  return _curMode;
+}
+
 void setup() {
   // This is for Trinket 5V 16MHz, you can remove these three lines if you are not using a Trinket
 #if defined (__AVR_ATtiny85__)
@@ -58,44 +71,46 @@ void setup() {
 
 void loop() {
   int brightness = 1;
-  cycleAllAtOnce(brightness);
-  clearPixels();  
-  cycleOneByOne(brightness);
-  clearPixels();
-  
+  switch(getCurMode()) {
+    case 'a':
+      cycleAllAtOnce(brightness);
+      clearPixels();  
+      break;
+    case 'b':
+      cycleAllAtOnce(brightness);
+      clearPixels();  
+      cycleOneByOne(brightness);
+      clearPixels();
+      break;
+    case 'c':
+      cycleOneByOne(brightness);
+      clearPixels();
+      break;
+    default:
+      break;
+  }
 }
 
 void setPixel(int pixel, int r, int g, int b) {
     pixels.setPixelColor(pixel, pixels.Color(r, g, b));
 }
 
+void setPixelFromBuf(int pixel, int bufPosition) {
+    byte r,g,b;
+    r = pixVals[bufPosition*3];
+    g = pixVals[bufPosition*3 + 1];
+    b = pixVals[bufPosition*3 + 2];
+    setPixel(pixel, r, g, b);
+  
+}
+
 void cycleAllAtOnce(int brightness) {
 
   for (int i =0; i < pixValsCt/3; i++)
   {
-    byte r,g,b;
-    r = pixVals[i*3];
-    g = pixVals[i*3 + 1];
-    b = pixVals[i*3 + 2];
-    setPixel(i, r, g, b);
+    setPixelFromBuf(i, i);
   }
-//  for(int i =  0; i < NUMPIXELS; i++ ){
-//    setPixel(i, brightness, 0, 0);
-//  }
-//  pixels.show(); // This sends the updated pixel color to the hardware.
-//
-//  delay(delayval);
-//  for(int i =  0; i < NUMPIXELS; i++ ){
-//    setPixel(i, 0, brightness, 0);
-//  }
-//  pixels.show(); // This sends the updated pixel color to the hardware.
-//  
-//  delay(delayval);
-//  for(int i =  0; i < NUMPIXELS; i++ ){
-//    setPixel(i, 0, 0, brightness);
-//  }
-  pixels.show(); // This sends the updated pixel color to the hardware.
-
+  pixels.show();
   delay(delayval * 2);
   
 }
@@ -111,17 +126,10 @@ void clearPixels() {
 void cycleOneByOne(int brightness) {
   
   for(int i = 0; i < NUMPIXELS; i++) {
-    setPixel(i, brightness, 0, 0);
+    setPixelFromBuf(i,i);
     pixels.show();
     delay(delayval);
     
-    setPixel(i, 0, brightness, 0);
-    pixels.show();
-    delay(delayval);
-
-    setPixel(i, 0, 0, brightness);
-    pixels.show();
-    delay(delayval);
     clearPixels();
   }
 }
