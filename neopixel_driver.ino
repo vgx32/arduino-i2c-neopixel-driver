@@ -2,7 +2,7 @@
 // released under the GPLv3 license to match the rest of the AdaFruit NeoPixel library
 
 #include <Adafruit_NeoPixel.h>
-#include <Wire.h>
+// #include <Wire.h>
 #ifdef __AVR__
   #include <avr/power.h>
 #endif
@@ -23,16 +23,14 @@ Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ80
 int delayval = 500; // delay for half a second
 
 #define SLAVE_ADDRESS 0x04
-int number = 0;
-int state = 0;
 
-byte pixVals[] ={ 20, 0, 0,
-                0, 20, 0,
-                0, 0, 20,
+byte pixVals[] ={ 20, 10, 0,
+                20, 20, 20,
+                0, 20, 20,
                 20, 0, 10};
               
 int pixValsCt = NUMPIXELS * 3;
-
+int _curPixValsIndex = 0;
 byte _curMode = 'c';
 
 bool isMode(byte m) {
@@ -46,6 +44,10 @@ byte getCurMode(){
   return _curMode;
 }
 
+void setCurMode(byte m) {
+  _curMode = m;
+}
+
 void setup() {
   // This is for Trinket 5V 16MHz, you can remove these three lines if you are not using a Trinket
 #if defined (__AVR_ATtiny85__)
@@ -57,12 +59,14 @@ void setup() {
 
   pinMode(13, OUTPUT);
   Serial.begin(9600); // start serial for output
+
+// re-add when raspberry pi is fixed
   // initialize i2c as slave
-  Wire.begin(SLAVE_ADDRESS);
+  // Wire.begin(SLAVE_ADDRESS);
   
-  // define callbacks for i2c communication
-  Wire.onReceive(receiveData);
-  Wire.onRequest(sendData);
+  // // define callbacks for i2c communication
+  // Wire.onReceive(receiveData);
+  // Wire.onRequest(sendData);
   
   Serial.println("Ready!");
   
@@ -134,32 +138,27 @@ void cycleOneByOne(int brightness) {
   }
 }
 
+
+// re-add when working raspberry pi code
 // callback for received data
-void receiveData(int byteCount){
-
-  while(Wire.available()) {
-    number = Wire.read();
-    Serial.print("data received: ");
-    Serial.println(number);
+// void receiveData(int byteCount){
+//   byte b = 0;
+//   while(Wire.available()) {
+//     b = Wire.read();
+//     Serial.print("data received: ");
+//     Serial.println(b);
+//     if(isMode(b)){
+//       setCurMode(b);
+//     }
     
-    if (number == 1){
-      if (state == 0){
-        digitalWrite(13, HIGH); // set the LED on
-        state = 1;
-      }
-      else
-      {
-        digitalWrite(13, LOW); // set the LED off
-        state = 0;
-      }
-    }
-  }
-}
+   
+//   }
+// }
 
-// callback for sending data
-void sendData(){
-  Wire.write(number);
-}
+// // callback for sending data
+// void sendData(){
+// //  Wire.write(number);
+// }
 
 
 
