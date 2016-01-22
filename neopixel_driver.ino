@@ -24,12 +24,12 @@ int delayval = 500; // delay for half a second
 
 #define SLAVE_ADDRESS 0x04
 
-byte pixVals[] ={ 20, 10, 0,
+byte _displayBuf[] ={ 20, 10, 0,
                 20, 20, 20,
                 0, 20, 20,
                 20, 0, 10};
               
-int pixValsCt = NUMPIXELS * 3;
+int _displayBufCt = NUMPIXELS * 3;
 int _curPixValsIndex = 0;
 byte _curMode = 'c';
 
@@ -51,11 +51,6 @@ void setCurMode(byte m) {
 String _pixelBuf = "";
 
 void setup() {
-  // This is for Trinket 5V 16MHz, you can remove these three lines if you are not using a Trinket
-#if defined (__AVR_ATtiny85__)
-  if (F_CPU == 16000000) clock_prescale_set(clock_div_1);
-#endif
-  // End of trinket special code
 
   pixels.begin(); // This initializes the NeoPixel library.
 
@@ -70,7 +65,7 @@ void setup() {
   // Wire.onReceive(receiveData);
   // Wire.onRequest(sendData);
 
-  _pixelBuf.reserve(pixValsCt + 1);
+  _pixelBuf.reserve(_displayBufCt + 1);
   Serial.println("Ready!");
   
 }
@@ -82,7 +77,7 @@ void loop() {
     Serial.println("got a buf!");
     Serial.println(_pixelBuf);
     // clear the string:
-    copyReceivedPixelsToBuf();
+    updateDisplayBuffer();
     _pixelBuf = "";
     stringComplete = false;
   }
@@ -113,16 +108,16 @@ void setPixel(int pixel, int r, int g, int b) {
 
 void setPixelFromBuf(int pixel, int bufPosition) {
     byte r,g,b;
-    r = pixVals[bufPosition*3];
-    g = pixVals[bufPosition*3 + 1];
-    b = pixVals[bufPosition*3 + 2];
+    r = _displayBuf[bufPosition*3];
+    g = _displayBuf[bufPosition*3 + 1];
+    b = _displayBuf[bufPosition*3 + 2];
     setPixel(pixel, r, g, b);
   
 }
 
 void cycleAllAtOnce(int brightness) {
 
-  for (int i =0; i < pixValsCt/3; i++)
+  for (int i =0; i < _displayBufCt/3; i++)
   {
     setPixelFromBuf(i, i);
   }
@@ -150,9 +145,10 @@ void cycleOneByOne(int brightness) {
   }
 }
 
-void copyReceivedPixelsToBuf(){
-  for (int i = 0; i < pixValsCt; i++) {
-    pixVals[i] = _pixelBuf[i+1];
+void updateDisplayBuffer(){
+  setCurMode(_pixelBuf[0]);
+  for (int i = 0; i < _displayBufCt; i++) {
+    _displayBuf[i] = _pixelBuf[i+1];
   }
 }
 
