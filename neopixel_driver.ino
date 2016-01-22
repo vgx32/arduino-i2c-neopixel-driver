@@ -48,6 +48,8 @@ void setCurMode(byte m) {
   _curMode = m;
 }
 
+String _pixelBuf = "";
+
 void setup() {
   // This is for Trinket 5V 16MHz, you can remove these three lines if you are not using a Trinket
 #if defined (__AVR_ATtiny85__)
@@ -67,13 +69,23 @@ void setup() {
   // // define callbacks for i2c communication
   // Wire.onReceive(receiveData);
   // Wire.onRequest(sendData);
-  
+
+  _pixelBuf.reserve(pixValsCt + 1);
   Serial.println("Ready!");
   
 }
 
+bool stringComplete = false;
 
 void loop() {
+  if (stringComplete) {
+    Serial.println("got a buf!");
+    Serial.println(_pixelBuf);
+    // clear the string:
+    copyReceivedPixelsToBuf();
+    _pixelBuf = "";
+    stringComplete = false;
+  }
   int brightness = 1;
   switch(getCurMode()) {
     case 'a':
@@ -138,7 +150,26 @@ void cycleOneByOne(int brightness) {
   }
 }
 
+void copyReceivedPixelsToBuf(){
+  for (int i = 0; i < pixValsCt; i++) {
+    pixVals[i] = _pixelBuf[i+1];
+  }
+}
 
+
+void serialEvent() {
+  while (Serial.available()) {
+    // get the new byte:
+    byte inVal = Serial.read();
+    // add it to the inputString:
+    _pixelBuf += (char)inVal;
+    // if the incoming character is a newline, set a flag
+    // so the main loop can do something about it:
+    if ((char)inVal == '\n') {
+      stringComplete = true;
+    }
+  }
+}
 // re-add when working raspberry pi code
 // callback for received data
 // void receiveData(int byteCount){
